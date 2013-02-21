@@ -27,6 +27,13 @@ gcc: /usr/bin/gcc
 c++: /usr/bin/c++
 cc:  /usr/bin/cc
 
+# Cross compilers
+arm-linux-gcc: /opt/gcc/arm/host/usr/bin/arm-linux-gcc
+armeb-linux-gcc: /opt/gcc/armeb/host/usr/bin/armeb-linux-gcc
+mips-linux-gcc: /opt/gcc/mips/host/usr/bin/mips-linux-gcc
+mipsel-linux-gcc: /opt/gcc/mipsel/host/usr/bin/mipsel-linux-gcc
+
+
 # Define aliases for the usual compilers to allow using colorgcc
 # without path munging.  (E.g. make CXX=color-g++)
 color-g++: /usr/bin/g++
