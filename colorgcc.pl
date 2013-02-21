@@ -107,7 +107,15 @@ sub initDefaults
   $compilerPaths{"g++"} = "/usr/bin/g++";
   $compilerPaths{"cc"}  = "/usr/bin/cc";
   $compilerPaths{"c++"} = "/usr/bin/c++";
-
+  
+  
+  #Actual paths to these cross compilers will need to be
+  #set in colorgccrc
+  $compilerPaths{"mips-linux-gcc"} = "/usr/bin/mips-linux-gcc";
+  $compilerPaths{"mipsel-linux-gcc"} = "/usr/bin/mipsel-linux-gcc";
+  $compilerPaths{"arm-linux-gcc"} = "/usr/bin/arm-linux-gcc";
+  $compilerPaths{"armeb-linux-gcc"} = "/usr/bin/armeb-linux-gcc";
+   
   $nocolor{"dumb"} = "true";
 
   $colors{"srcColor"} = color("cyan");
