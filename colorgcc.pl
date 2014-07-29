@@ -212,23 +212,33 @@ if (-f $configFile)
 # Figure out which compiler to invoke based on our program name.
 $0 =~ m%.*/(.*)$%;
 my $progName = $1 || $0;
+my $compiler_pid;
 
-my $compiler = $compilerPaths{$progName} || $compilerPaths{"gcc"};
-
-# Get the terminal type.
-my $terminal = $ENV{"TERM"} || "dumb";
-
-# If it's in the list of terminal types not to color, or if
-# we're writing to something that's not a tty, don't do color.
-if (! -t STDOUT || $nocolor{$terminal})
-{
-  exec $compiler, @ARGV
-  or die("Couldn't exec");
+if ($progName eq 'colorgcc') {
+  # If called as "colorgcc", operate as filter on STDIN.
+  # Note: be sure to direct STDERR of gcc to this script!
+  open(GCCOUT, "<&STDIN");
 }
+else {
 
-# Keep the pid of the compiler process so we can get its return
-# code and use that as our return code.
-my $compiler_pid = open3('<&STDIN', \*GCCOUT, '', $compiler, @ARGV);
+  my $compiler = $compilerPaths{$progName} || $compilerPaths{"gcc"};
+
+  # Get the terminal type.
+  my $terminal = $ENV{"TERM"} || "dumb";
+
+  # If it's in the list of terminal types not to color, or if
+  # we're writing to something that's not a tty, don't do color.
+  if (! -t STDOUT || $nocolor{$terminal})
+  {
+    exec $compiler, @ARGV
+    or die("Couldn't exec");
+  }
+
+  # Keep the pid of the compiler process so we can get its return
+  # code and use that as our return code.
+  $compiler_pid = open3('<&STDIN', \*GCCOUT, '', $compiler, @ARGV);
+
+}
 
 # Colorize the output from the compiler.
 while(<GCCOUT>)
@@ -267,6 +277,9 @@ while(<GCCOUT>)
   }
 }
 
-# Get the return code of the compiler and exit with that.
-waitpid($compiler_pid, 0);
-exit ($? >> 8);
+if ($compiler_pid)
+{
+  # Get the return code of the compiler and exit with that.
+  waitpid($compiler_pid, 0);
+  exit ($? >> 8);
+}
