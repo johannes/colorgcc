@@ -228,7 +228,7 @@ $compiler_pid = open3('<&STDIN', \*GCCOUT, '', $compiler, @ARGV);
 # Colorize the output from the compiler.
 while(<GCCOUT>)
 {
-  if (m/^(.*?):([0-9]+):(.*)$/) # filename:lineno:message
+  if (m/^(.*?):([0-9]+(?::[0-9]+)?):(.*)$/) # filename:lineno:colno?:message
   {
     $field1 = $1 || "";
     $field2 = $2 || "";
