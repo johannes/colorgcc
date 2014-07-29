@@ -98,8 +98,13 @@
 #
 # 1.0.0 Initial Version
 
+use strict;
+use warnings;
+
 use Term::ANSIColor;
 use IPC::Open3;
+
+my(%nocolor, %colors, %compilerPaths);
 
 sub initDefaults
 {
@@ -136,8 +141,8 @@ sub loadPreferences
     next if (m/^\#.*/);          # It's a comment.
     next if (!m/(.*):\s*(.*)/);  # It's not of the form "foo: bar".
 
-    $option = $1;
-    $value = $2;
+    my $option = $1;
+    my $value = $2;
 
     if ($option =~ m/cc|c\+\+|gcc|g\+\+/)
     {
@@ -147,7 +152,7 @@ sub loadPreferences
     {
       # The nocolor option lists terminal types, separated by
       # spaces, not to do color on.
-      foreach $termtype (split(/\s+/, $value))
+      foreach my $termtype (split(/\s+/, $value))
       {
         $nocolor{$termtype} = "true";
       }
@@ -198,7 +203,7 @@ sub srcscan
 initDefaults();
 
 # Read the configuration file, if there is one.
-$configFile = $ENV{"HOME"} . "/.colorgccrc";
+my $configFile = $ENV{"HOME"} . "/.colorgccrc";
 if (-f $configFile)
 {
   loadPreferences($configFile);
@@ -206,33 +211,43 @@ if (-f $configFile)
 
 # Figure out which compiler to invoke based on our program name.
 $0 =~ m%.*/(.*)$%;
-$progName = $1 || $0;
+my $progName = $1 || $0;
+my $compiler_pid;
 
-$compiler = $compilerPaths{$progName} || $compilerPaths{"gcc"};
-
-# Get the terminal type.
-$terminal = $ENV{"TERM"} || "dumb";
-
-# If it's in the list of terminal types not to color, or if
-# we're writing to something that's not a tty, don't do color.
-if (! -t STDOUT || $nocolor{$terminal})
-{
-  exec $compiler, @ARGV
-  or die("Couldn't exec");
+if ($progName eq 'colorgcc') {
+  # If called as "colorgcc", operate as filter on STDIN.
+  # Note: be sure to direct STDERR of gcc to this script!
+  open(GCCOUT, "<&STDIN");
 }
+else {
 
-# Keep the pid of the compiler process so we can get its return
-# code and use that as our return code.
-$compiler_pid = open3('<&STDIN', \*GCCOUT, '', $compiler, @ARGV);
+  my $compiler = $compilerPaths{$progName} || $compilerPaths{"gcc"};
+
+  # Get the terminal type.
+  my $terminal = $ENV{"TERM"} || "dumb";
+
+  # If it's in the list of terminal types not to color, or if
+  # we're writing to something that's not a tty, don't do color.
+  if (! -t STDOUT || $nocolor{$terminal})
+  {
+    exec $compiler, @ARGV
+    or die("Couldn't exec");
+  }
+
+  # Keep the pid of the compiler process so we can get its return
+  # code and use that as our return code.
+  $compiler_pid = open3('<&STDIN', \*GCCOUT, '', $compiler, @ARGV);
+
+}
 
 # Colorize the output from the compiler.
 while(<GCCOUT>)
 {
   if (m/^(.*?):([0-9]+):(.*)$/) # filename:lineno:message
   {
-    $field1 = $1 || "";
-    $field2 = $2 || "";
-    $field3 = $3 || "";
+    my $field1 = $1 || "";
+    my $field2 = $2 || "";
+    my $field3 = $3 || "";
 
     if ($field3 =~ m/\s+warning:.*/)
     {
@@ -262,11 +277,9 @@ while(<GCCOUT>)
   }
 }
 
-# Get the return code of the compiler and exit with that.
-waitpid($compiler_pid, 0);
-exit ($? >> 8);
-
-
-
-
-
+if ($compiler_pid)
+{
+  # Get the return code of the compiler and exit with that.
+  waitpid($compiler_pid, 0);
+  exit ($? >> 8);
+}
