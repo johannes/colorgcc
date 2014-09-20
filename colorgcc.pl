@@ -109,6 +109,7 @@ sub initDefaults
   $compilerPaths{"c++"} = "/usr/bin/c++";
 
   $nocolor{"dumb"} = "true";
+  %forcecolor = ();
 
   $colors{"srcColor"} = color("cyan");
   $colors{"identColor"} = color("green");
@@ -150,6 +151,15 @@ sub loadPreferences
       foreach $termtype (split(/\s+/, $value))
       {
         $nocolor{$termtype} = "true";
+      }
+    }
+    elsif ($option eq "forcecolor")
+    {
+      # The forcecolor option lists terminal types, separated by
+      # spaces, to do color on even if tty is not STDOUT
+      foreach $termtype (split(/\s+/, $value))
+      {
+        $forcecolor{$termtype} = "true";
       }
     }
     else
@@ -215,7 +225,7 @@ $terminal = $ENV{"TERM"} || "dumb";
 
 # If it's in the list of terminal types not to color, or if
 # we're writing to something that's not a tty, don't do color.
-if (! -t STDOUT || $nocolor{$terminal})
+if ((! -t STDOUT || $nocolor{$terminal}) && not defined $forcecolor{$terminal})
 {
   exec $compiler, @ARGV
   or die("Couldn't exec");
