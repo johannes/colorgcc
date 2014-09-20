@@ -225,6 +225,7 @@ $terminal = $ENV{"TERM"} || "dumb";
 
 # If it's in the list of terminal types not to color, or if
 # we're writing to something that's not a tty, don't do color.
+# If forcecolor for this terminal, color even if not STDOUT.
 if ((! -t STDOUT || $nocolor{$terminal}) && not defined $forcecolor{$terminal})
 {
   exec $compiler, @ARGV
